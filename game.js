@@ -4,14 +4,33 @@ const restartButton = document.getElementById('restart-button');
 
 // Game state
 let player, obstacles, score, gameState, animationFrameId;
+let backgroundImage, shipImage;
+let imagesLoaded = 0;
+const totalImages = 2; // background and ship
 const keys = {};
 
-// Simple colored shapes instead of images
+// Load game images
+backgroundImage = new Image();
+backgroundImage.onload = imageLoaded;
+backgroundImage.src = 'assets/background.png';
+
+shipImage = new Image();
+shipImage.onload = imageLoaded;
+shipImage.src = 'assets/ship.png';
+
+function imageLoaded() {
+    imagesLoaded++;
+    if (imagesLoaded === totalImages) {
+        // All images loaded, start the game
+        resetGame();
+    }
+}
+
+// Game settings
 const playerSettings = {
     width: 50,
     height: 50,
-    speed: 5,
-    color: '#3498db'
+    speed: 5
 };
 
 const obstacleSettings = {
@@ -57,9 +76,11 @@ function drawWaitingScreen() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // Draw Background
+    ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+    
     // Draw Player
-    ctx.fillStyle = player.color;
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+    ctx.drawImage(shipImage, player.x, player.y, player.width, player.height);
 
     // Draw Obstacles
     obstacles.forEach(obstacle => {
@@ -68,8 +89,8 @@ function draw() {
     });
 
     // Draw Score
-    ctx.fillStyle = '#333';
-    ctx.font = '20px Arial';
+    ctx.fillStyle = '#fff'; // White text for better visibility on background
+    ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'left';
     ctx.fillText('Score: ' + score, 10, 25);
 }
