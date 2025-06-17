@@ -3,8 +3,77 @@ const fs = require('fs');
 const path = require('path');
 const PORT = 3000;
 
+// In-memory storage for chat messages and connected clients
+const chatMessages = [];
+const chatClients = []; // Array of ServerResponse objects for SSE connections
+
+// Helper to broadcast a message object to all connected clients
+function broadcastChatMessage(msgObj) {
+  const payload = `data: ${JSON.stringify(msgObj)}\n\n`;
+  chatClients.forEach((client) => {
+    client.write(payload);
+  });
+}
+
 // Create HTTP server
 const server = http.createServer((req, res) => {
+  // --- Chat SSE endpoint ---
+  if (req.url === '/chat-stream') {
+    // Establish Server-Sent Events stream
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+    res.write('retry: 1000\n\n');
+
+    // Send chat history (last 50 messages)
+    chatMessages.slice(-50).forEach((msg) => {
+      res.write(`data: ${JSON.stringify(msg)}\n\n`);
+    });
+
+    // Add client to list
+    chatClients.push(res);
+
+    // Remove client on disconnect
+    req.on('close', () => {
+      const idx = chatClients.indexOf(res);
+      if (idx !== -1) chatClients.splice(idx, 1);
+    });
+    return; // Finished handling /chat
+  }
+
+  // --- Chat POST endpoint ---
+  if (req.url === '/send' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+      // Basic protection against large payloads
+      if (body.length > 1e4) req.socket.destroy();
+    });
+    req.on('end', () => {
+      try {
+        const msgObj = JSON.parse(body);
+        if (msgObj && msgObj.author && msgObj.text) {
+          msgObj.timestamp = Date.now();
+          chatMessages.push(msgObj);
+          broadcastChatMessage(msgObj);
+          // Limit stored messages
+          if (chatMessages.length > 100) chatMessages.shift();
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ status: 'ok' }));
+        } else {
+          res.writeHead(400);
+          res.end('Invalid message');
+        }
+      } catch (e) {
+        res.writeHead(400);
+        res.end('Invalid JSON');
+      }
+    });
+    return; // Finished handling /send
+  }
+
   // Handle streaming endpoint
   if (req.url === '/stream') {
     // Set headers for Server-Sent Events

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple Two-Person Chat</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #fafafa;
+    }
+    h1 {
+      text-align: center;
+    }
+    .chat-container {
+      display: flex;
+      gap: 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .panel {
+      flex: 1;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      height: 600px;
+    }
+    .messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      border-bottom: 1px solid #eee;
+      white-space: pre-wrap;
+    }
+    .input-area {
+      display: flex;
+      padding: 10px;
+      gap: 10px;
+    }
+    .input-area input[type="text"] {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .input-area button {
+      padding: 8px 14px;
+      border: none;
+      background: #4CAF50;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .timestamp {
+      font-size: 11px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <h1>Alice &amp; Bob Chat</h1>
+  <div class="chat-container">
+    <!-- Alice panel -->
+    <div class="panel" id="alicePanel">
+      <div class="messages" id="aliceMessages"></div>
+      <form class="input-area" id="aliceForm">
+        <input type="text" id="aliceInput" placeholder="Alice: Type a message" autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+
+    <!-- Bob panel -->
+    <div class="panel" id="bobPanel">
+      <div class="messages" id="bobMessages"></div>
+      <form class="input-area" id="bobForm">
+        <input type="text" id="bobInput" placeholder="Bob: Type a message" autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const aliceMessages = document.getElementById('aliceMessages');
+    const bobMessages = document.getElementById('bobMessages');
+
+    function appendMessage(container, msg) {
+      const div = document.createElement('div');
+      div.innerHTML = `<strong>${msg.author}:</strong> ${msg.text} <span class="timestamp">(${new Date(msg.timestamp).toLocaleTimeString()})</span>`;
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    // Shared EventSource for both panels
+    const evtSource = new EventSource('/chat-stream');
+    evtSource.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        appendMessage(aliceMessages, msg);
+        appendMessage(bobMessages, msg);
+      } catch (err) {
+        console.error('Bad message', err);
+      }
+    };
+
+    function setupForm(formId, inputId, author) {
+      const form = document.getElementById(formId);
+      const input = document.getElementById(inputId);
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        fetch('/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ author, text })
+        }).catch(console.error);
+        input.value = '';
+      });
+    }
+
+    setupForm('aliceForm', 'aliceInput', 'Alice');
+    setupForm('bobForm', 'bobInput', 'Bob');
+  </script>
+</body>
+</html>
