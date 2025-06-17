@@ -7,18 +7,17 @@ const PORT = 3000;
 const server = http.createServer((req, res) => {
   // Handle streaming endpoint
   if (req.url === '/stream') {
-    // Set headers for streaming
+    // Set headers for Server-Sent Events
     res.writeHead(200, {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Transfer-Encoding': 'chunked',
+      'Content-Type': 'text/event-stream; charset=utf-8',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*' // Only for development
     });
     
-    // Send initial greeting
-    res.write('Hello! Starting calculation process...\n');
-    // Explicitly flush the data
-    res.flushHeaders();
+    // Send initial greeting as an SSE message
+    res.write('retry: 1000\n\n');  // SSE requires this line
+    res.write('data: Hello! Starting calculation process...\n\n');
     
     let iteration = 0;
     let lastPrime = 1;
@@ -47,14 +46,13 @@ const server = http.createServer((req, res) => {
       // Find next prime number
       lastPrime = findNextPrime(lastPrime);
       
-      // Send progress update
-      res.write(`Iteration ${iteration}/20: Found prime number ${lastPrime}\n`);
-      // Explicitly flush the data after each write
-      res.flushHeaders();
+      // Send progress update as an SSE message
+      res.write(`data: Iteration ${iteration}/20: Found prime number ${lastPrime}\n\n`);
       
       // End after 20 iterations
       if (iteration >= 20) {
-        res.write('Calculation complete!\n');
+        res.write('data: Calculation complete!\n\n');
+        res.write('event: close\ndata: {}\n\n');  // Send close event
         res.end();
         clearInterval(intervalId);
       }

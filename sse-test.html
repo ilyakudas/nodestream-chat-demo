@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SSE Prime Number Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        #output {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        button {
+            padding: 10px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Prime Number Calculator</h1>
+    <button id="startBtn">Start Calculation</button>
+    <div id="output">Click the button to start the calculation...</div>
+
+    <script>
+        const output = document.getElementById('output');
+        const startBtn = document.getElementById('startBtn');
+        let eventSource = null;
+
+        function appendMessage(message) {
+            output.textContent += message + '\n';
+            output.scrollTop = output.scrollHeight;
+        }
+
+        startBtn.addEventListener('click', () => {
+            // Disable button to prevent multiple connections
+            startBtn.disabled = true;
+            output.textContent = 'Connecting to server...\n';
+
+            // Create a new EventSource connection
+            eventSource = new EventSource('/stream');
+
+            // Handle incoming messages
+            eventSource.onmessage = (event) => {
+                appendMessage(event.data);
+            };
+
+            // Handle errors
+            eventSource.onerror = (error) => {
+                appendMessage('Error: Connection failed or was closed');
+                eventSource.close();
+                startBtn.disabled = false;
+            };
+
+            // Handle custom 'close' event
+            eventSource.addEventListener('close', () => {
+                appendMessage('Calculation completed!');
+                eventSource.close();
+                startBtn.disabled = false;
+            }, false);
+        });
+    </script>
+</body>
+</html>
