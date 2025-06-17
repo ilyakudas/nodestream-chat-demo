@@ -6,21 +6,19 @@ const restartButton = document.getElementById('restart-button');
 let player, obstacles, score, gameState, animationFrameId;
 const keys = {};
 
-// Game settings
+// Simple colored shapes instead of images
 const playerSettings = {
     width: 50,
     height: 50,
     speed: 5,
-    img: new Image()
+    color: '#3498db'
 };
-playerSettings.img.src = 'https://img.icons8.com/plasticine/100/000000/rocket.png';
 
 const obstacleSettings = {
     width: 50,
     spawnRate: 0.02, // approx. 1 per second at 60fps
-    img: new Image()
+    color: '#e74c3c'
 };
-obstacleSettings.img.src = 'https://img.icons8.com/plasticine/100/000000/asteroid.png';
 
 function isCollision(rect1, rect2) {
     return rect1.x < rect2.x + rect2.width &&
@@ -33,7 +31,10 @@ function resetGame() {
     player = {
         x: 50,
         y: canvas.height / 2 - playerSettings.height / 2,
-        ...playerSettings
+        width: playerSettings.width,
+        height: playerSettings.height,
+        speed: playerSettings.speed,
+        color: playerSettings.color
     };
     obstacles = [];
     score = 0;
@@ -57,11 +58,13 @@ function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Draw Player
-    ctx.drawImage(player.img, player.x, player.y, player.width, player.height);
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x, player.y, player.width, player.height);
 
     // Draw Obstacles
     obstacles.forEach(obstacle => {
-        ctx.drawImage(obstacle.img, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        ctx.fillStyle = obstacle.color;
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
     });
 
     // Draw Score
@@ -85,7 +88,7 @@ function update() {
             y: y, 
             width: obstacleSettings.width, 
             height: height,
-            img: obstacleSettings.img
+            color: obstacleSettings.color
         });
     }
 
