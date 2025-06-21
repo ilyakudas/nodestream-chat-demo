@@ -1,5 +1,7 @@
 # NodeStream Chat & Demo
 
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue.svg)](https://github.com/ilyakudas/nodestream-chat-demo)
+
 A lightweight Node.js application demonstrating real-time streaming techniques with Server-Sent Events (SSE). This project includes two main features:
 
 1. **Prime Number Calculator Stream** - A server-side script that simulates calculation progress by finding prime numbers and streaming the results in real-time.
@@ -22,7 +24,7 @@ A lightweight Node.js application demonstrating real-time streaming techniques w
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/nodestream-chat-demo.git
+   git clone https://github.com/ilyakudas/nodestream-chat-demo.git
    cd nodestream-chat-demo
    ```
 
